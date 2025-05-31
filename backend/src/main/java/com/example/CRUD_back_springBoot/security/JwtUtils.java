@@ -52,7 +52,9 @@ public class JwtUtils {
         try {
             extractClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw e;
+        } catch (Exception e){
             return false;
         }
     }
