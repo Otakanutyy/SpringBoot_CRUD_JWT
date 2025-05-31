@@ -27,8 +27,20 @@ public class Task {
     private Status status = Status.TODO;
 
     private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @PrePersist
+    public void prePersist() {
+        this.created_at = LocalDateTime.now();
+        this.updated_at = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updated_at = LocalDateTime.now();
+    }
 }
