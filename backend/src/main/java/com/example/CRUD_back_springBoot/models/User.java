@@ -34,4 +34,16 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Task> tasks;
+
+    @PrePersist
+    public void prePersist() {
+        this.created_at = LocalDateTime.now();
+        this.updated_at = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updated_at = LocalDateTime.now();
+    }
+
 }

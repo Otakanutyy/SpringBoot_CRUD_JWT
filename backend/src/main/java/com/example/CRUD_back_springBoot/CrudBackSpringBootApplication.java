@@ -8,6 +8,6 @@ public class CrudBackSpringBootApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CrudBackSpringBootApplication.class, args);
-
+		System.out.println("Hello World");
 	}
 }
