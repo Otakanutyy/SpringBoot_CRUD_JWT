@@ -17,8 +17,13 @@ import java.util.Optional;
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
 
+    @Transactional
     @Override
-    public Task createTask(Task task) {
+    public Task createTask(User user, TaskRequest taskRequest) {
+        Task task = new Task();
+        task.setUser(user);
+        task.setTitle(taskRequest.getTitle());
+        task.setDescription(taskRequest.getDescription());
         return taskRepository.save(task);
     }
 
@@ -52,6 +57,7 @@ public class TaskServiceImpl implements TaskService {
         return task;
     }
 
+    @Transactional
     @Override
     public void deleteTask(Long id) {
         taskRepository.deleteById(id);

@@ -1,11 +1,14 @@
 package com.example.CRUD_back_springBoot.services;
 
+import com.example.CRUD_back_springBoot.models.Role;
 import com.example.CRUD_back_springBoot.models.User;
 import com.example.CRUD_back_springBoot.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
@@ -24,6 +27,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByEmail(email);
     }
 
+    @Transactional
     @Override
     public User saveUser(User user) {
         return userRepository.save(user);
@@ -37,6 +41,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isAdmin(User user) {
-        return user.getRole().equals("ADMIN");
+        return user.getRole() == Role.ADMIN;
     }
 }

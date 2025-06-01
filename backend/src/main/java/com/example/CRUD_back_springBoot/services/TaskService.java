@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskService {
-    Task createTask(Task task);
+    Task createTask(User user, TaskRequest task);
     List<Task> getTasksByUser(User user);
     List<Task> getTasksByUserAndStatus(User user, Status status);
     Optional<Task> getTaskById(Long id);

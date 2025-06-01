@@ -6,6 +6,7 @@ import com.example.CRUD_back_springBoot.models.Role;
 import com.example.CRUD_back_springBoot.models.User;
 import com.example.CRUD_back_springBoot.repositories.UserRepository;
 import com.example.CRUD_back_springBoot.security.JwtUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,25 +16,24 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService{
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private RefreshTokenService refreshTokenService;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
+
+    @Transactional
     @Override
     public ResponseEntity<?> register(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+        if (userService.existsByEmail(registerRequest.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         }
 
@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService{
         } else {
             user.setRole(Role.USER);
         }
-        userRepository.save(user);
+        userService.saveUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
@@ -79,6 +79,7 @@ public class AuthServiceImpl implements AuthService{
         return ResponseEntity.ok(new JwtRefreshResponse(newJwt, token.getToken()));
     }
 
+    @Transactional
     @Override
     public ResponseEntity<JwtRefreshResponse> login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
@@ -87,7 +88,7 @@ public class AuthServiceImpl implements AuthService{
                 )
         );
 
-        User user = userRepository.findByEmail(loginRequest.getEmail())
+        User user = userService.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String jwt = jwtUtils.generateToken(user.getEmail(), user.getRole().name());

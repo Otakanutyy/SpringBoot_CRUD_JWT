@@ -6,6 +6,7 @@ import com.example.CRUD_back_springBoot.repositories.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -19,6 +20,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Value("${jwt.refresh.expiration}")
     private long refreshTokenDurationSeconds;
 
+    @Transactional
     @Override
     public RefreshToken createRefreshToken(User user) {
         RefreshToken re = new RefreshToken();
@@ -34,11 +36,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
+    @Transactional
     @Override
     public void deleteByUser(User user) {
         refreshTokenRepository.deleteByUser(user);
     }
 
+    @Transactional
     @Override
     public void deleteByToken(String token) {
         refreshTokenRepository.findByToken(token).ifPresent(refreshTokenRepository::delete);

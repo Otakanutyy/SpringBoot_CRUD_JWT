@@ -11,7 +11,6 @@ import com.example.CRUD_back_springBoot.services.TaskService;
 import com.example.CRUD_back_springBoot.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,12 +30,8 @@ public class TaskController {
 
     @PostMapping("/create")
     public ResponseEntity<Task> createTask(@RequestBody TaskRequest taskRequest, @AuthenticationPrincipal UserDetails userDetails) {
-        Task task = new Task();
         User user = userService.getCurrentUser(userDetails);
-        task.setUser(user);
-        task.setDescription(taskRequest.getDescription());
-        task.setTitle(taskRequest.getTitle());
-        Task created = taskService.createTask(task);
+        Task created = taskService.createTask(user, taskRequest);
         return ResponseEntity.ok(created);
     }
 
