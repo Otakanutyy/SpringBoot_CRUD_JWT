@@ -10,4 +10,5 @@ public interface UserService {
     boolean existsByEmail(String email);
     User saveUser(User user);
     User getCurrentUser(UserDetails userDetails);
+    boolean isAdmin(User user);
 }

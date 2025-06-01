@@ -34,4 +34,9 @@ public class UserServiceImpl implements UserService {
         return findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+
+    @Override
+    public boolean isAdmin(User user) {
+        return user.getRole().equals("ADMIN");
+    }
 }

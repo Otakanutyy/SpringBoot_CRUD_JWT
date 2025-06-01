@@ -1,6 +1,8 @@
 package com.example.CRUD_back_springBoot.controllers;
 
+import com.example.CRUD_back_springBoot.DTOs.StatusRequest;
 import com.example.CRUD_back_springBoot.DTOs.TaskRequest;
+import com.example.CRUD_back_springBoot.exceptions.UserIsNotAdminException;
 import com.example.CRUD_back_springBoot.exceptions.UserIsNotOwnerException;
 import com.example.CRUD_back_springBoot.models.Status;
 import com.example.CRUD_back_springBoot.models.Task;
@@ -46,8 +48,12 @@ public class TaskController {
     }
 
     @GetMapping("/get_all_tasks_admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Task>> getAllTasksForAdmin() {
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Task>> getAllTasksForAdmin(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        if (!userService.isAdmin(user)) {
+            throw new UserIsNotAdminException("You are not admin");
+        }
         List<Task> tasks = taskService.getAllTasks();
         return ResponseEntity.ok(tasks);
     }
@@ -80,6 +86,23 @@ public class TaskController {
         }
     }
 
+    @PutMapping("/set_status/{id}")
+    public ResponseEntity<Task> setTaskStatus(@PathVariable Long id, @RequestBody StatusRequest statusRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        Task task = getTaskIfOwnerOrThrow(id, user);
+
+        Status taskStatus = taskService.tryParseStatus(statusRequest.status)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid status: " + statusRequest.status));
+
+        TaskRequest taskRequest = new TaskRequest(task.getTitle(), task.getDescription(), taskStatus);
+        try {
+            Task updated = taskService.updateTask(id, taskRequest);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteTask(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getCurrentUser(userDetails);
@@ -96,5 +119,4 @@ public class TaskController {
         }
         return task;
     }
-
 }

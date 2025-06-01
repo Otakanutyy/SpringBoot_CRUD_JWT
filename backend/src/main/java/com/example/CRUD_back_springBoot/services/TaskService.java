@@ -17,4 +17,5 @@ public interface TaskService {
     List<Task> getAllTasks();
     void deleteTask(Long id);
     boolean isOwner(Task task, User user);
+    Optional<Status> tryParseStatus(String statusString);
 }

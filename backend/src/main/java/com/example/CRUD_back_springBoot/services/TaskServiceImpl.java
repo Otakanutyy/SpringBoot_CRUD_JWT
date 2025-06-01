@@ -62,4 +62,12 @@ public class TaskServiceImpl implements TaskService {
         return task.getUser().equals(user);
     }
 
+    public Optional<Status> tryParseStatus(String statusString) {
+        try {
+            return Optional.of(Status.valueOf(statusString.trim().toUpperCase()));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
 }
