@@ -53,7 +53,9 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(id).orElseThrow();
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
-        task.setStatus(dto.getStatus());
+        if(dto.getStatus() != null) {
+            task.setStatus(dto.getStatus());
+        }
         return task;
     }
 

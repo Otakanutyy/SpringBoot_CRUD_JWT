@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>CRUD_back_springBoot</artifactId>
@@ -96,6 +96,13 @@
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.12.5</version>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Swagger UI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.8</version>
 		</dependency>
 	</dependencies>
 
