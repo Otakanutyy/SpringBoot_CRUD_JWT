@@ -1,5 +1,6 @@
 package com.example.CRUD_back_springBoot.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,21 +27,22 @@ public class Task {
     @Column(nullable = false)
     private Status status = Status.TODO;
 
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
     @PrePersist
     public void prePersist() {
-        this.created_at = LocalDateTime.now();
-        this.updated_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.updated_at = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

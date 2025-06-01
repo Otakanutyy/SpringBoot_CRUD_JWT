@@ -1,97 +1,100 @@
 package com.example.CRUD_back_springBoot.controllers;
 
+import com.example.CRUD_back_springBoot.DTOs.TaskRequest;
+import com.example.CRUD_back_springBoot.exceptions.UserIsNotOwnerException;
 import com.example.CRUD_back_springBoot.models.Status;
 import com.example.CRUD_back_springBoot.models.Task;
 import com.example.CRUD_back_springBoot.models.User;
 import com.example.CRUD_back_springBoot.services.TaskService;
 import com.example.CRUD_back_springBoot.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/tasks")
 public class TaskController {
-    @Autowired
-    private TaskService taskService;
 
-    @Autowired
-    private UserService userService;
+    private final TaskService taskService;
+    private final UserService userService;
 
-    // Helper to get User from authenticated email
-    private User getCurrentUser(UserDetails userDetails) {
-        return userService.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
+    @PostMapping("/create")
+    public ResponseEntity<Task> createTask(@RequestBody TaskRequest taskRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        Task task = new Task();
+        User user = userService.getCurrentUser(userDetails);
         task.setUser(user);
+        task.setDescription(taskRequest.getDescription());
+        task.setTitle(taskRequest.getTitle());
         Task created = taskService.createTask(task);
         return ResponseEntity.ok(created);
     }
 
-    @GetMapping
+    @GetMapping("/get_tasks")
     public ResponseEntity<List<Task>> getAllTasksForUser(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         List<Task> tasks = taskService.getTasksByUser(user);
         return ResponseEntity.ok(tasks);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/get_all_tasks_admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Task>> getAllTasksForAdmin() {
         List<Task> tasks = taskService.getAllTasks();
         return ResponseEntity.ok(tasks);
     }
 
-    @GetMapping("/status/{status}")
+    @GetMapping("/get_by_status_user/{status}")
     public ResponseEntity<List<Task>> getTasksByStatus(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Status status) {
-        User user = getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         List<Task> tasks = taskService.getTasksByUserAndStatus(user, status);
         return ResponseEntity.ok(tasks);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get_task/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
-        Optional<Task> taskOpt = taskService.getTaskById(id);
-        if (taskOpt.isPresent() && taskOpt.get().getUser().getId() == user.getId()) {
-            return ResponseEntity.ok(taskOpt.get());
-        }
-        return ResponseEntity.notFound().build();
+        User user = userService.getCurrentUser(userDetails);
+        Task task = getTaskIfOwnerOrThrow(id, user);
+        return ResponseEntity.ok(task);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task updatedTask, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
-        Optional<Task> taskOpt = taskService.getTaskById(id);
-        if (taskOpt.isPresent() && taskOpt.get().getUser().getId() == user.getId()) {
-            Task task = taskOpt.get();
-            task.setTitle(updatedTask.getTitle());
-            task.setDescription(updatedTask.getDescription());
-            task.setStatus(updatedTask.getStatus());
-            Task saved = taskService.updateTask(task);
-            return ResponseEntity.ok(saved);
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Task> updateTask(@PathVariable Long id,
+                                           @RequestBody TaskRequest updatedTask,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        Task task = getTaskIfOwnerOrThrow(id, user);
+        try {
+            Task updated = taskService.updateTask(id, updatedTask);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteTask(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
-        Optional<Task> taskOpt = taskService.getTaskById(id);
-        if (taskOpt.isPresent() && taskOpt.get().getUser().getId() == user.getId()) {
-            taskService.deleteTask(id);
-            return ResponseEntity.ok("Task deleted");
-        }
-        return ResponseEntity.notFound().build();
+        User user = userService.getCurrentUser(userDetails);
+        Task task = getTaskIfOwnerOrThrow(id, user);
+        taskService.deleteTask(id);
+        return ResponseEntity.ok("Task deleted");
     }
+
+    private Task getTaskIfOwnerOrThrow(Long taskId, User user) {
+        Task task = taskService.getTaskById(taskId)
+                .orElseThrow(() -> new NoSuchElementException("Task not found"));
+        if (!taskService.isOwner(task, user)) {
+            throw new UserIsNotOwnerException("You are not the owner of this task.");
+        }
+        return task;
+    }
+
 }

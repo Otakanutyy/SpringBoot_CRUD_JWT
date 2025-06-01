@@ -1,11 +1,13 @@
 package com.example.CRUD_back_springBoot.services;
 
+import com.example.CRUD_back_springBoot.DTOs.TaskRequest;
 import com.example.CRUD_back_springBoot.models.Status;
 import com.example.CRUD_back_springBoot.models.Task;
 import com.example.CRUD_back_springBoot.models.User;
 import com.example.CRUD_back_springBoot.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,9 +42,14 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.findById(id);
     }
 
+    @Transactional
     @Override
-    public Task updateTask(Task task) {
-        return taskRepository.save(task);
+    public Task updateTask(Long id, TaskRequest dto) {
+        Task task = taskRepository.findById(id).orElseThrow();
+        task.setTitle(dto.getTitle());
+        task.setDescription(dto.getDescription());
+        task.setStatus(dto.getStatus());
+        return task;
     }
 
     @Override
@@ -50,5 +57,9 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.deleteById(id);
     }
 
+    @Override
+    public boolean isOwner(Task task, User user) {
+        return task.getUser().equals(user);
+    }
 
 }
